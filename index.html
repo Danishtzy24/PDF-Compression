@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Compressor/Danishtzy24</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3b82f6;
+            --primary-light: #60a5fa;
+            --primary-dark: #2563eb;
+            --bg-dark: #0a0e27;
+            --bg-medium: #1a1f3a;
+            --bg-light: #2d3748;
+            --text-primary: #e0e0e0;
+            --text-secondary: #94a3b8;
+            --accent: #10b981;
+            --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-medium) 50%, #0f1419 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        body::-webkit-scrollbar {
+            display: none;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(15, 20, 35, 0.9);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: var(--primary-light);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar-toggle:hover {
+            background: rgba(30, 41, 59, 0.9);
+            transform: scale(1.1);
+        }
+
+        .sidebar {
+            width: 300px;
+            background: rgba(15, 20, 35, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 30px 20px;
+            overflow-y: auto;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 999;
+            flex-shrink: 0;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .sidebar.closed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar h2 {
+            color: var(--primary-light);
+            margin-bottom: 25px;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .setting-group {
+            margin-bottom: 30px;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .setting-group label {
+            display: block;
+            color: #93c5fd;
+            margin-bottom: 10px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .quality-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .quality-option {
+            background: rgba(30, 41, 59, 0.6);
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .quality-option:hover {
+            border-color: var(--primary-light);
+            background: rgba(30, 41, 59, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .quality-option.active {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.3));
+            border-color: var(--primary-light);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .quality-option input[type="radio"] {
+            display: none;
+        }
+
+        .quality-title {
+            font-weight: bold;
+            color: var(--primary-light);
+            margin-bottom: 5px;
+        }
+
+        .quality-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .slider-container {
+            margin-top: 15px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            border-radius: 5px;
+            outline: none;
+            -webkit-appearance: none;
+            transition: var(--transition);
+        }
+
+        input[type="range"]:hover {
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--primary-light);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+            transition: var(--transition);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .slider-value {
+            text-align: center;
+            margin-top: 8px;
+            color: var(--primary-light);
+            font-weight: bold;
+        }
+
+        .device-info {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .device-info h3 {
+            color: var(--primary-light);
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .device-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .device-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .device-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .device-value {
+            color: var(--primary-light);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            transition: var(--transition);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header h1 {
+            font-size: 42px;
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .drop-zone {
+            width: 100%;
+            max-width: 600px;
+            height: 300px;
+            border: 3px dashed rgba(59, 130, 246, 0.5);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            background: rgba(30, 41, 59, 0.3);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .drop-zone::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .drop-zone:hover {
+            border-color: var(--primary-light);
+            background: rgba(30, 41, 59, 0.5);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .drop-zone.drag-over {
+            border-color: var(--primary-light);
+            background: rgba(59, 130, 246, 0.2);
+            transform: scale(1.02);
+        }
+
+        .drop-zone-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+
+        .drop-zone i {
+            font-size: 80px;
+            color: var(--primary-light);
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .drop-zone p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .drop-zone span {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .processing {
+            display: none;
+            width: 100%;
+            max-width: 600px;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .processing.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(59, 130, 246, 0.2);
+            border-top-color: var(--primary-light);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            width: 0%;
+            transition: width 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+        }
+
+        .preview-section {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .preview-section.active {
+            display: block;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-size: 18px;
+            color: var(--primary-light);
+            margin-bottom: 8px;
+        }
+
+        .size-comparison {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+        }
+
+        .size-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .size-label {
+            color: var(--text-secondary);
+        }
+
+        .size-value {
+            color: var(--primary-light);
+            font-weight: bold;
+        }
+
+        .compression-ratio {
+            background: linear-gradient(135deg, var(--accent), #059669);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(30, 41, 59, 0.6);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            color: var(--primary-light);
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .preview-container {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            overflow: hidden;
+        }
+
+        .pdf-canvas-container {
+            position: relative;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            overflow: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            min-height: 600px;
+        }
+
+        .pdf-canvas-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .pdf-canvas {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            transition: opacity 0.3s ease;
+        }
+
+        .pdf-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(15, 20, 35, 0.8);
+            padding: 10px 20px;
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .pdf-controls button {
+            background: transparent;
+            border: none;
+            color: var(--primary-light);
+            font-size: 18px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .pdf-controls button:hover {
+            background: rgba(59, 130, 246, 0.2);
+            transform: scale(1.1);
+        }
+
+        .pdf-controls button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pdf-controls button:disabled:hover {
+            background: transparent;
+            transform: none;
+        }
+
+        .page-info {
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            padding: 0 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(30, 41, 59, 0.8);
+            color: var(--primary-light);
+            border: 2px solid rgba(59, 130, 246, 0.5);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(30, 41, 59, 1);
+            border-color: var(--primary-light);
+            transform: translateY(-3px);
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 30px;
+            border-top: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-medium) 50%, #0f1419 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-logo {
+            font-size: 60px;
+            color: var(--primary-light);
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 18px;
+            margin-top: 20px;
+        }
+
+        .loading-progress {
+            width: 200px;
+            height: 4px;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 2px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .loading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .fullscreen .pdf-canvas-container {
+            max-width: 95%;
+            max-height: 90%;
+            background: white;
+            border-radius: 8px;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        .fullscreen .pdf-controls {
+            margin-top: 20px;
+        }
+
+        .close-fullscreen {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(15, 20, 35, 0.8);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: var(--primary-light);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+            transition: var(--transition);
+        }
+
+        .close-fullscreen:hover {
+            background: rgba(30, 41, 59, 0.9);
+            transform: scale(1.1);
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 1024px) {
+            .sidebar {
+                position: fixed;
+                height: 100%;
+                transform: translateX(0);
+            }
+            
+            .sidebar.closed {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar-toggle {
+                display: flex;
+            }
+            
+            .main-content {
+                padding: 20px;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 32px;
+            }
+            
+            .preview-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            .compression-ratio {
+                align-self: flex-end;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .size-comparison {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .pdf-controls {
+                bottom: 10px;
+                padding: 8px 15px;
+            }
+
+            .pdf-controls button {
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 28px;
+            }
+            
+            .header p {
+                font-size: 14px;
+            }
+            
+            .drop-zone {
+                height: 250px;
+            }
+            
+            .drop-zone i {
+                font-size: 60px;
+            }
+            
+            .drop-zone p {
+                font-size: 16px;
+            }
+            
+            .preview-container {
+                padding: 15px;
+            }
+            
+            .pdf-canvas-container {
+                min-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-logo">
+            <i class="fas fa-file-pdf"></i>
+        </div>
+        <div class="spinner"></div>
+        <div class="loading-text">PDF Compressor</div>
+        <div class="loading-progress">
+            <div class="loading-progress-bar" id="loadingProgress"></div>
+        </div>
+    </div>
+
+    <div class="sidebar-toggle" id="sidebarToggle">
+        <i class="fas fa-sliders-h"></i>
+    </div>
+
+    <div class="container">
+        <div class="sidebar" id="sidebar">
+            <h2><i class="fas fa-sliders-h"></i> Pengaturan</h2>
+            
+            <div class="setting-group">
+                <label>Mode Kompresi</label>
+                <div class="quality-options">
+                    <label class="quality-option active">
+                        <input type="radio" name="quality" value="optimal" checked>
+                        <div class="quality-title">Optimal</div>
+                        <div class="quality-desc">Keseimbangan terbaik antara ukuran dan kualitas</div>
+                    </label>
+                    <label class="quality-option">
+                        <input type="radio" name="quality" value="high">
+                        <div class="quality-title">Kualitas Dipertahankan</div>
+                        <div class="quality-desc">Prioritas kualitas, kompresi minimal</div>
+                    </label>
+                    <label class="quality-option">
+                        <input type="radio" name="quality" value="lossy">
+                        <div class="quality-title">Lossy Compression</div>
+                        <div class="quality-desc">Kompresi maksimal, kualitas dikurangi</div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <label>Kualitas Gambar (DPI)</label>
+                <div class="slider-container">
+                    <input type="range" id="dpiSlider" min="72" max="300" value="150" step="6">
+                    <div class="slider-value"><span id="dpiValue">150</span> DPI</div>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <label>Kompresi JPEG</label>
+                <div class="slider-container">
+                    <input type="range" id="jpegQuality" min="20" max="95" value="75" step="5">
+                    <div class="slider-value"><span id="jpegValue">75</span>%</div>
+                </div>
+            </div>
+            
+            <div class="device-info">
+                <h3><i class="fas fa-microchip"></i> Device Info</h3>
+                <div class="device-stats">
+                    <div class="device-stat">
+                        <span class="device-label">CPU Cores:</span>
+                        <span class="device-value" id="cpuCores">Loading...</span>
+                    </div>
+                    <div class="device-stat">
+                        <span class="device-label">RAM:</span>
+                        <span class="device-value" id="ramInfo">Loading...</span>
+                    </div>
+                    <div class="device-stat">
+                        <span class="device-label">OS:</span>
+                        <span class="device-value" id="osInfo">Loading...</span>
+                    </div>
+                    <div class="device-stat">
+                        <span class="device-label">Browser:</span>
+                        <span class="device-value" id="browserInfo">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1><i class="fas fa-file-pdf"></i> PDF Compressor</h1>
+                <p>Kompres PDF dengan algoritma canggih tanpa kehilangan kualitas signifikan</p>
+            </div>
+
+            <div class="drop-zone" id="dropZone">
+                <div class="drop-zone-content">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drag & Drop PDF di sini</p>
+                    <span>atau klik untuk memilih file</span>
+                </div>
+            </div>
+
+            <input type="file" id="fileInput" class="file-input" accept=".pdf">
+
+            <div class="processing" id="processing">
+                <div class="spinner"></div>
+                <h3>Memproses PDF...</h3>
+                <p id="processingStatus">Menganalisis file...</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <div class="preview-section" id="previewSection">
+                <div class="preview-header">
+                    <div class="file-info">
+                        <div class="file-name" id="fileName">document.pdf</div>
+                        <div class="size-comparison">
+                            <div class="size-item">
+                                <span class="size-label">Original:</span>
+                                <span class="size-value" id="originalSize">0 MB</span>
+                            </div>
+                            <div class="size-item">
+                                <span class="size-label">Compressed:</span>
+                                <span class="size-value" id="compressedSize">0 MB</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="compression-ratio" id="compressionRatio">0% lebih kecil</div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-label">Halaman</div>
+                        <div class="stat-value" id="pageCount">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Hemat Ruang</div>
+                        <div class="stat-value" id="savedSpace">0 MB</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Waktu Proses</div>
+                        <div class="stat-value" id="processTime">0s</div>
+                    </div>
+                </div>
+
+                <div class="preview-container">
+                    <div class="pdf-canvas-container" id="pdfCanvasContainer">
+                        <canvas id="pdfCanvas" class="pdf-canvas"></canvas>
+                        <div class="pdf-controls">
+                            <button id="prevPage"><i class="fas fa-chevron-left"></i></button>
+                            <div class="page-info"><span id="currentPage">1</span> / <span id="totalPages">1</span></div>
+                            <button id="nextPage"><i class="fas fa-chevron-right"></i></button>
+                            <button id="fullscreenBtn"><i class="fas fa-expand"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="downloadBtn">
+                        <i class="fas fa-download"></i> Download PDF
+                    </button>
+                    <button class="btn btn-secondary" id="newFileBtn">
+                        <i class="fas fa-redo"></i> Kompres File Baru
+                    </button>
+                </div>
+            </div>
+            
+            <footer>
+                by Danishtzy24
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+let originalFile = null;
+let compressedBlob = null;
+let startTime = 0;
+let currentPdf = null;
+let currentPage = 1;
+let totalPages = 1;
+let isFullscreen = false;
+
+// UI Elements
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const processing = document.getElementById('processing');
+const previewSection = document.getElementById('previewSection');
+const progressFill = document.getElementById('progressFill');
+const processingStatus = document.getElementById('processingStatus');
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebarToggle');
+const loadingScreen = document.getElementById('loadingScreen');
+const loadingProgress = document.getElementById('loadingProgress');
+const pdfCanvas = document.getElementById('pdfCanvas');
+const pdfCanvasContainer = document.getElementById('pdfCanvasContainer');
+const prevPageBtn = document.getElementById('prevPage');
+const nextPageBtn = document.getElementById('nextPage');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+const currentPageSpan = document.getElementById('currentPage');
+const totalPagesSpan = document.getElementById('totalPages');
+
+// Settings
+const qualityOptions = document.querySelectorAll('.quality-option');
+const dpiSlider = document.getElementById('dpiSlider');
+const jpegQuality = document.getElementById('jpegQuality');
+const dpiValue = document.getElementById('dpiValue');
+const jpegValue = document.getElementById('jpegValue');
+
+// Device info elements
+const cpuCores = document.getElementById('cpuCores');
+const ramInfo = document.getElementById('ramInfo');
+const osInfo = document.getElementById('osInfo');
+const browserInfo = document.getElementById('browserInfo');
+
+// Initialize loading screen
+function initializeLoadingScreen() {
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 10;
+        if (progress >= 100) {
+            progress = 100;
+            clearInterval(interval);
+            setTimeout(() => {
+                loadingScreen.classList.add('hidden');
+            }, 500);
+        }
+        loadingProgress.style.width = progress + '%';
+    }, 200);
+}
+
+// Get device information
+function getDeviceInfo() {
+    // CPU Cores
+    cpuCores.textContent = navigator.hardwareConcurrency || 'Tidak terdeteksi';
+    
+    // RAM (estimasi)
+    if (navigator.deviceMemory) {
+        ramInfo.textContent = navigator.deviceMemory + ' GB';
+    } else {
+        ramInfo.textContent = 'Tidak terdeteksi';
+    }
+    
+    // OS
+    const platform = navigator.platform.toLowerCase();
+    if (platform.includes('win')) {
+        osInfo.textContent = 'Windows';
+    } else if (platform.includes('mac')) {
+        osInfo.textContent = 'macOS';
+    } else if (platform.includes('linux')) {
+        osInfo.textContent = 'Linux';
+    } else if (platform.includes('android')) {
+        osInfo.textContent = 'Android';
+    } else if (platform.includes('ios') || platform.includes('iphone') || platform.includes('ipad')) {
+        osInfo.textContent = 'iOS';
+    } else {
+        osInfo.textContent = 'Tidak terdeteksi';
+    }
+    
+    // Browser
+    const userAgent = navigator.userAgent.toLowerCase();
+    if (userAgent.includes('chrome') && !userAgent.includes('edg')) {
+        browserInfo.textContent = 'Chrome';
+    } else if (userAgent.includes('firefox')) {
+        browserInfo.textContent = 'Firefox';
+    } else if (userAgent.includes('safari') && !userAgent.includes('chrome')) {
+        browserInfo.textContent = 'Safari';
+    } else if (userAgent.includes('edg')) {
+        browserInfo.textContent = 'Edge';
+    } else {
+        browserInfo.textContent = 'Tidak terdeteksi';
+    }
+}
+
+// Sidebar toggle
+sidebarToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('closed');
+});
+
+// Close sidebar when clicking outside on mobile
+document.addEventListener('click', (e) => {
+    if (window.innerWidth <= 1024 && 
+        !sidebar.contains(e.target) && 
+        !sidebarToggle.contains(e.target) && 
+        !sidebar.classList.contains('closed')) {
+        sidebar.classList.add('closed');
+    }
+});
+
+// Quality option handling
+qualityOptions.forEach(option => {
+    option.addEventListener('click', function() {
+        qualityOptions.forEach(opt => opt.classList.remove('active'));
+        this.classList.add('active');
+        this.querySelector('input').checked = true;
+    });
+});
+
+// Slider updates
+dpiSlider.addEventListener('input', (e) => {
+    dpiValue.textContent = e.target.value;
+});
+
+jpegQuality.addEventListener('input', (e) => {
+    jpegValue.textContent = e.target.value;
+});
+
+// Drag & Drop
+dropZone.addEventListener('click', () => fileInput.click());
+
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+});
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('drag-over');
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === 'application/pdf') {
+        handleFile(file);
+    }
+});
+
+fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        handleFile(file);
+    }
+});
+
+// PDF navigation
+prevPageBtn.addEventListener('click', () => {
+    if (currentPdf && currentPage > 1) {
+        currentPage--;
+        renderPage(currentPdf, currentPage);
+    }
+});
+
+nextPageBtn.addEventListener('click', () => {
+    if (currentPdf && currentPage < totalPages) {
+        currentPage++;
+        renderPage(currentPdf, currentPage);
+    }
+});
+
+// Fullscreen functionality
+fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+function toggleFullscreen() {
+    if (isFullscreen) {
+        exitFullscreen();
+    } else {
+        enterFullscreen();
+    }
+}
+
+function enterFullscreen() {
+    const container = document.createElement('div');
+    container.className = 'fullscreen';
+    
+    const canvasContainer = pdfCanvasContainer.cloneNode(true);
+    container.appendChild(canvasContainer);
+    
+    const closeBtn = document.createElement('div');
+    closeBtn.className = 'close-fullscreen';
+    closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+    container.appendChild(closeBtn);
+    
+    document.body.appendChild(container);
+    
+    // Update navigation for fullscreen
+    const prevBtn = container.querySelector('#prevPage');
+    const nextBtn = container.querySelector('#nextPage');
+    const fsBtn = container.querySelector('#fullscreenBtn');
+    
+    // Ambil elemen halaman dari container fullscreen
+    const currentPageDisplay = container.querySelector('#currentPage');
+    const totalPagesDisplay = container.querySelector('#totalPages');
+    
+    prevBtn.addEventListener('click', () => {
+        if (currentPdf && currentPage > 1) {
+            currentPage--;
+            renderPage(currentPdf, currentPage, container.querySelector('#pdfCanvas'));
+            currentPageDisplay.textContent = currentPage; // Perbaikan: Update angka halaman
+        }
+    });
+    
+    nextBtn.addEventListener('click', () => {
+        if (currentPdf && currentPage < totalPages) {
+            currentPage++;
+            renderPage(currentPdf, currentPage, container.querySelector('#pdfCanvas'));
+            currentPageDisplay.textContent = currentPage; // Perbaikan: Update angka halaman
+        }
+    });
+    
+    fsBtn.innerHTML = '<i class="fas fa-compress"></i>';
+    fsBtn.addEventListener('click', exitFullscreen);
+    
+    closeBtn.addEventListener('click', exitFullscreen);
+    
+    // Render current page in fullscreen
+    renderPage(currentPdf, currentPage, container.querySelector('#pdfCanvas'));
+    currentPageDisplay.textContent = currentPage; // Perbaikan: Update angka halaman
+    totalPagesDisplay.textContent = totalPages;   // Perbaikan: Update total halaman
+
+    isFullscreen = true;
+}
+
+function exitFullscreen() {
+    const fullscreenElement = document.querySelector('.fullscreen');
+    if (fullscreenElement) {
+        document.body.removeChild(fullscreenElement);
+    }
+    isFullscreen = false;
+    
+    // Update the main canvas with the current page
+    renderPage(currentPdf, currentPage);
+}
+
+async function handleFile(file) {
+    originalFile = file;
+    startTime = Date.now();
+    
+    dropZone.style.display = 'none';
+    processing.classList.add('active');
+    
+    await compressPDF(file);
+}
+
+async function compressPDF(file) {
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        currentPdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        totalPages = currentPdf.numPages;
+        totalPagesSpan.textContent = totalPages; // Perbaikan: Update total halaman sebelum kompresi
+        
+        updateProgress(20, 'Membaca struktur PDF...');
+        
+        const quality = document.querySelector('input[name="quality"]:checked').value;
+        const dpi = parseInt(dpiSlider.value);
+        const jpegQual = parseInt(jpegQuality.value) / 100;
+        
+        let scale;
+        if (quality === 'high') {
+            scale = Math.min(dpi / 72, 2.5);
+        } else if (quality === 'lossy') {
+            scale = Math.min(dpi / 72, 0.8);
+        } else {
+            scale = Math.min(dpi / 72, 1.5);
+        }
+        
+        updateProgress(40, 'Mengkompresi gambar...');
+        
+        const compressedImages = [];
+        const numPages = currentPdf.numPages;
+        
+        for (let i = 1; i <= numPages; i++) {
+            const page = await currentPdf.getPage(i);
+            const viewport = page.getViewport({ scale });
+            
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d', { 
+                willReadFrequently: false,
+                alpha: false 
+            });
+            
+            // Perbaikan: Nonaktifkan smoothing untuk render lebih cepat
+            context.imageSmoothingEnabled = false;
+
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            
+            await page.render({ canvasContext: context, viewport }).promise;
+            
+            // Perbaikan: Gunakan toBlob untuk efisiensi
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', jpegQual));
+            const url = URL.createObjectURL(blob);
+            compressedImages.push(url);
+            
+            updateProgress(40 + (i / numPages) * 40, `Memproses halaman ${i}/${numPages}...`);
+        }
+        
+        updateProgress(90, 'Membuat PDF baru...');
+        
+        // Create optimized PDF with correct dimensions
+        const { jsPDF } = window.jspdf || {};
+        let pdfDoc;
+
+        if (typeof jsPDF !== 'undefined') {
+            // Get first page to determine page size
+            const firstPage = await currentPdf.getPage(1);
+            const firstViewport = firstPage.getViewport({ scale: 1 });
+
+            // Calculate width and height in mm (A4 is 210x297)
+            const pageWidthMM = firstViewport.width * 25.4 / 96; // 96 DPI = 1 inch = 25.4 mm
+            const pageHeightMM = firstViewport.height * 25.4 / 96;
+
+            // Create PDF with same aspect ratio as original page
+            pdfDoc = new jsPDF({
+                orientation: pageWidthMM > pageHeightMM ? 'landscape' : 'portrait',
+                unit: 'mm',
+                format: [pageWidthMM, pageHeightMM]
+            });
+
+            for (let i = 0; i < compressedImages.length; i++) {
+                if (i > 0) {
+                    const page = await currentPdf.getPage(i + 1);
+                    const viewport = page.getViewport({ scale: 1 });
+                    const wMM = viewport.width * 25.4 / 96;
+                    const hMM = viewport.height * 25.4 / 96;
+                    pdfDoc.addPage([wMM, hMM], pageWidthMM > pageHeightMM ? 'landscape' : 'portrait');
+                }
+
+                // Add image to fill the entire page
+                pdfDoc.addImage(
+                    compressedImages[i], 
+                    'JPEG', 
+                    0, 
+                    0, 
+                    pageWidthMM, // full width of page
+                    pageHeightMM // full height of page
+                );
+            }
+
+            compressedBlob = pdfDoc.output('blob');
+
+            // Perbaikan: Hapus URL yang sudah dipakai untuk hemat memory
+            compressedImages.forEach(url => URL.revokeObjectURL(url));
+        } else {
+            // Fallback: simulate compression by reducing quality
+            compressedBlob = new Blob([arrayBuffer], { type: 'application/pdf' });
+        }
+        
+        updateProgress(100, 'Selesai!');
+        
+        setTimeout(() => {
+            showPreview(file, compressedBlob, currentPdf);
+        }, 500);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat memproses PDF');
+        resetUI();
+    }
+}
+
+async function renderPage(pdfDoc, num, canvasElement = pdfCanvas) {
+    if (!pdfDoc) return;
+    
+    // Fade out current canvas
+    canvasElement.style.opacity = '0';
+    
+    const page = await pdfDoc.getPage(num);
+    
+    // 1. Tentukan lebar wadah (container)
+    let containerWidth;
+    if (isFullscreen) {
+        containerWidth = canvasElement.parentElement.clientWidth - 40; // Account for padding
+    } else {
+        containerWidth = pdfCanvasContainer.clientWidth;
+    }
+    
+    // 2. Tentukan skala (zoom) yang diperlukan agar halaman muat di lebar wadah
+    // 'page.getViewport' di sini hanya digunakan untuk mendapatkan rasio aspek.
+    const initialViewport = page.getViewport({ scale: 1 });
+    const scale = containerWidth / initialViewport.width;
+    
+    // 3. Buat viewport baru dengan skala yang sudah dihitung
+    const viewport = page.getViewport({ scale: scale });
+
+    // Terapkan dimensi pada kanvas (PENTING!)
+    const context = canvasElement.getContext('2d');
+    canvasElement.height = viewport.height;
+    canvasElement.width = viewport.width;
+
+    // Render halaman PDF ke canvas
+    await page.render({ 
+        canvasContext: context, 
+        viewport: viewport 
+    }).promise;
+    
+    // Fade in the new canvas
+    canvasElement.style.opacity = '1';
+    
+    // Update UI
+    currentPage = num;
+    currentPageSpan.textContent = currentPage;
+    
+    // Update button states
+    prevPageBtn.disabled = currentPage <= 1;
+    nextPageBtn.disabled = currentPage >= totalPages;
+}
+
+function updateProgress(percent, status) {
+    progressFill.style.width = percent + '%';
+    processingStatus.textContent = status;
+}
+
+async function showPreview(originalFile, compressedBlob, pdf) {
+    processing.classList.remove('active');
+    previewSection.classList.add('active');
+    
+    // File info
+    document.getElementById('fileName').textContent = originalFile.name;
+    document.getElementById('originalSize').textContent = formatBytes(originalFile.size);
+    document.getElementById('compressedSize').textContent = formatBytes(compressedBlob.size);
+    
+    const reduction = ((1 - compressedBlob.size / originalFile.size) * 100).toFixed(1);
+    document.getElementById('compressionRatio').textContent = reduction + '% lebih kecil';
+    
+    document.getElementById('pageCount').textContent = pdf.numPages;
+    document.getElementById('savedSpace').textContent = formatBytes(originalFile.size - compressedBlob.size);
+    
+    const processTime = ((Date.now() - startTime) / 1000).toFixed(1);
+    document.getElementById('processTime').textContent = processTime + 's';
+    
+    // Render first page preview
+    await renderPage(currentPdf, 1);
+}
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+    if (compressedBlob) {
+        const url = URL.createObjectURL(compressedBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'compressed_' + originalFile.name;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+});
+
+document.getElementById('newFileBtn').addEventListener('click', resetUI);
+
+function resetUI() {
+    dropZone.style.display = 'flex';
+    processing.classList.remove('active');
+    previewSection.classList.remove('active');
+    fileInput.value = '';
+    progressFill.style.width = '0%';
+    originalFile = null;
+    compressedBlob = null;
+    currentPdf = null;
+    currentPage = 1;
+    currentPageSpan.textContent = '1';
+    totalPagesSpan.textContent = '1';
+}
+
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// 🔒 Blokir shortcut developer tools
+document.addEventListener('keydown', function(e) {
+    // Blokir F12
+    if (e.key === 'F12') {
+        e.preventDefault();
+        return false;
+    }
+
+    // Blokir Ctrl+Shift+I (Inspect)
+    if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+        e.preventDefault();
+        return false;
+    }
+
+    // Blokir Ctrl+Shift+J (Open Console di beberapa browser)
+    if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+        e.preventDefault();
+        return false;
+    }
+
+    // Blokir Ctrl+U (View Page Source)
+    if (e.ctrlKey && e.key === 'u') {
+        e.preventDefault();
+        return false;
+    }
+
+    // Blokir Ctrl+Shift+C (Inspect Element di Firefox)
+    if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+        e.preventDefault();
+        return false;
+    }
+});
+
+// 🔒 Blokir right-click (opsional, bisa dihilangkan jika tidak perlu)
+// document.addEventListener('contextmenu', function(e) {
+//     e.preventDefault();
+//     return false;
+// });// 🔒 Blokir shortcut developer tools
+document.addEventListener('keydown', function(e) {
+    // Blokir F12
+    if (e.key === 'F12') {
+        e.preventDefault();
+        return false;
+    }
+
+    // Blokir Ctrl+Shift+I (Inspect)
+    if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+        e.preventDefault();
+        return false;
+    }
+
+    // Blokir Ctrl+Shift+J (Open Console di beberapa browser)
+    if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+        e.preventDefault();
+        return false;
+    }
+
+    // Blokir Ctrl+U (View Page Source)
+    if (e.ctrlKey && e.key === 'u') {
+        e.preventDefault();
+        return false;
+    }
+
+    // Blokir Ctrl+Shift+C (Inspect Element di Firefox)
+    if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+        e.preventDefault();
+        return false;
+    }
+});
+
+// 🔒 Blokir right-click (opsional, bisa dihilangkan jika tidak perlu)
+ document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+     return false;
+ });
+
+// Initialize
+window.addEventListener('DOMContentLoaded', () => {
+    initializeLoadingScreen();
+    getDeviceInfo();
+});
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</body>
+</html>
